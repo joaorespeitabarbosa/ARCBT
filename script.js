@@ -336,3 +336,94 @@ document.addEventListener('DOMContentLoaded', () => {
   const firstTab = document.querySelector('.tab-btn');
   if (firstTab) firstTab.click();
 });
+
+/* ============================================================
+   12. LIGHTBOX — Galeria de Fotografias
+============================================================ */
+(function initLightbox() {
+  const lightbox     = document.getElementById('lightbox');
+  const lightboxImg  = document.getElementById('lightbox-img');
+  const lightboxCap  = document.getElementById('lightbox-caption');
+  const closebtn     = document.getElementById('lightbox-close');
+  const prevBtn      = document.getElementById('lightbox-prev');
+  const nextBtn      = document.getElementById('lightbox-next');
+
+  if (!lightbox) return;
+
+  // Recolher todas as imagens da galeria
+  const galeriaItems = Array.from(document.querySelectorAll('.galeria-item'));
+  let currentIndex   = 0;
+
+  function openLightbox(index) {
+    currentIndex = index;
+    const item   = galeriaItems[index];
+    const img    = item.querySelector('img');
+    const cap    = item.dataset.caption || img.alt;
+
+    lightboxImg.src = img.src.replace('w=700', 'w=1200'); // melhor resolução
+    lightboxImg.alt = img.alt;
+    lightboxCap.textContent = cap;
+
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Atualizar botões nav
+    prevBtn.style.display = galeriaItems.length > 1 ? 'flex' : 'none';
+    nextBtn.style.display = galeriaItems.length > 1 ? 'flex' : 'none';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+    // Limpar src com ligeiro delay para evitar flash
+    setTimeout(() => { lightboxImg.src = ''; }, 350);
+  }
+
+  function showPrev() {
+    currentIndex = (currentIndex - 1 + galeriaItems.length) % galeriaItems.length;
+    openLightbox(currentIndex);
+  }
+
+  function showNext() {
+    currentIndex = (currentIndex + 1) % galeriaItems.length;
+    openLightbox(currentIndex);
+  }
+
+  // Click nos items da galeria
+  galeriaItems.forEach((item, index) => {
+    item.addEventListener('click', () => openLightbox(index));
+    item.setAttribute('tabindex', '0');
+    item.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') openLightbox(index);
+    });
+  });
+
+  // Controlos do lightbox
+  closebtn.addEventListener('click', closeLightbox);
+  prevBtn.addEventListener('click', showPrev);
+  nextBtn.addEventListener('click', showNext);
+
+  // Fechar ao clicar no fundo
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+
+  // Teclado: Esc, setas
+  document.addEventListener('keydown', (e) => {
+    if (!lightbox.classList.contains('active')) return;
+    if (e.key === 'Escape')       closeLightbox();
+    if (e.key === 'ArrowLeft')    showPrev();
+    if (e.key === 'ArrowRight')   showNext();
+  });
+
+  // Swipe (touch)
+  let touchX = 0;
+  lightbox.addEventListener('touchstart', (e) => {
+    touchX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  lightbox.addEventListener('touchend', (e) => {
+    const diff = touchX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) diff > 0 ? showNext() : showPrev();
+  });
+})();
+
